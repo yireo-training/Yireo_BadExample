@@ -21,31 +21,63 @@ class Save extends Action
 
     public function execute()
     {
-        $apiUrl = 'https://dummyjson.com/products/1';
-        //$apiUrl = 'https://dummyjson.com/products/2';
+        if (isset($_GET['token'])) {
+            $apiUrl = 'https://dummyjson.com/products/1';
+            //$apiUrl = 'https://dummyjson.com/products/2';
 
-        $request = ObjectManager::getInstance()->get('\Magento\Framework\App\Request\Http');
-        $data = array(
-            'name'=>$request->getParam('name'),
-            'price'=>$request->getParam('price')
-        );
-        $data_json = json_encode($data);
+            $request = ObjectManager::getInstance()->get('\Magento\Framework\App\Request\Http');
+            $data = array(
+                'name'=>$request->getParam('name'),
+                'price'=>$request->getParam('price')
+            );
+            $data_json = json_encode($data);
 
 
-        $ch = curl_init($apiUrl);
-        $header = "Content-Type: "."application/json";
-        curl_setopt($ch, CURLOPT_VERBOSE, 1);
-        curl_setopt($ch, CURLOPT_URL, $apiUrl);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array($header));
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data_json);
-        $returned = curl_exec($ch);
+            $ch = curl_init($apiUrl);
+            $header = "Content-Type: "."application/json";
+            curl_setopt($ch, CURLOPT_VERBOSE, 1);
+            curl_setopt($ch, CURLOPT_URL, $apiUrl);
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array($header));
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $data_json);
+            $returned = curl_exec($ch);
 
-        if (curl_error($ch)) {
-            print curl_error($ch);
-        } else {
-            print 'ret: '.$returned;
+            if (curl_error($ch)) {
+                print curl_error($ch);
+                exit;
+            } else {
+                print 'ret: '.$returned;
+            }
+
+            $returned = json_decode($returned, true);
+            $reviews = [];
+            if (isset($returned['reviews'])) {
+                foreach ($returned['reviews'] as $review) {
+                    if (isset($review['rating'])) {
+                        if (isset($review['comment'])) {
+                            $reviews[] = $review;
+                        }
+                    }
+                }
+            }
+
+            // @todo: Save the $reviews to the database
         }
+    }
+
+    function getReviews()
+    {
+        $reviews = [];
+        if (isset($returned['reviews'])) {
+            foreach ($returned['reviews'] as $review) {
+                if (isset($review['rating'])) {
+                    if (isset($review['comment'])) {
+                        $reviews[] = $review;
+                    }
+                }
+            }
+        }
+        return $reviews;
     }
 }
